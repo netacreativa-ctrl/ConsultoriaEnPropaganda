@@ -1,0 +1,9 @@
+{
+  "name": "Consultoría de Propaganda - Ricardo Rodríguez Inda",
+  "description": "Advanced propaganda analysis tool for media, social networks, and institutional communications using AI reasoning.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

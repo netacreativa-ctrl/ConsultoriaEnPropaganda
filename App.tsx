@@ -1,26 +1,64 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Layout from './components/Layout';
 import MediaCapture from './components/MediaCapture';
 import AnalysisDisplay from './components/AnalysisDisplay';
-import { AnalysisStatus, AnalysisResult, MediaData } from './types';
+import { AnalysisStatus, AnalysisResult, MediaData, OutputLanguage } from './types';
 import { analyzePropaganda } from './services/propagandaService';
 
 const App: React.FC = () => {
   const [status, setStatus] = useState<AnalysisStatus>(AnalysisStatus.IDLE);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<OutputLanguage>('Español Mexicano');
+  const [sourceMedia, setSourceMedia] = useState<MediaData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
+  
+  const progressIntervalRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (status === AnalysisStatus.PROCESSING) {
+      setProgress(0);
+      setProgressLabel("Iniciando motores de consulta estratégica...");
+      const startTime = Date.now();
+      progressIntervalRef.current = setInterval(() => {
+        setProgress(prev => {
+          let next = prev;
+          if (prev < 30) next += 1.5;
+          else if (prev < 60) next += 0.8;
+          else if (prev < 85) next += 0.4;
+          else if (prev < 98) next += 0.1;
+          if (next >= 99) next = 99;
+          if (next < 15) setProgressLabel("Iniciando motores de consulta estratégica...");
+          else if (next < 45) setProgressLabel("Identificando propagandemas nucleares...");
+          else if (next < 75) setProgressLabel("Detectando principios de persuasión...");
+          else setProgressLabel("Finalizando reporte maestro...");
+          return parseFloat(next.toFixed(1));
+        });
+      }, 150);
+    } else if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    return () => { if (progressIntervalRef.current) clearInterval(progressIntervalRef.current); };
+  }, [status]);
 
   const handleCapture = async (media: MediaData) => {
+    // Requerir selección de llave API si se va a usar un modelo Pro o búsqueda real
+    if (!(await (window as any).aistudio.hasSelectedApiKey())) {
+      await (window as any).aistudio.openSelectKey();
+    }
+
     setStatus(AnalysisStatus.PROCESSING);
+    setSelectedLanguage(media.targetLanguage);
+    setSourceMedia(media);
     setError(null);
     try {
       const analysisResult = await analyzePropaganda(media);
       setResult(analysisResult);
-      setStatus(AnalysisStatus.COMPLETED);
+      setProgress(100);
+      setTimeout(() => setStatus(AnalysisStatus.COMPLETED), 500);
     } catch (err: any) {
       console.error(err);
-      setError("Falla en la conexión con el servidor de inteligencia. Reintente el proceso.");
+      setError("Falla en el enlace estratégico. Verifique su conexión o intente más tarde.");
       setStatus(AnalysisStatus.ERROR);
     }
   };
@@ -28,68 +66,37 @@ const App: React.FC = () => {
   const reset = () => {
     setStatus(AnalysisStatus.IDLE);
     setResult(null);
+    setSourceMedia(null);
     setError(null);
+    setProgress(0);
   };
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto space-y-12 py-10">
-        <section className="text-center space-y-4">
-          <div className="inline-block bg-navy/5 px-6 py-1 rounded-full border border-navy/10 text-navy font-bold text-[10px] uppercase tracking-[0.2em] mb-4">
-            Security Intelligence & Semiotics
-          </div>
-          <h2 className="text-6xl font-black text-navy leading-[0.9] tracking-tighter">
-            CONSULTORÍA DE <br/><span className="text-gray-400">PROPAGANDA.</span>
-          </h2>
-          <p className="text-gray-500 max-w-xl mx-auto text-lg font-light">
-            Análisis algorítmico de estructuras de persuasión masiva y desinformación.
-          </p>
-        </section>
-
-        {status === AnalysisStatus.IDLE && (
-          <div className="max-w-2xl mx-auto">
-            <MediaCapture onCapture={handleCapture} />
-          </div>
-        )}
-
+      <div className="w-full max-w-6xl mx-auto">
+        {status === AnalysisStatus.IDLE && <MediaCapture onCapture={handleCapture} />}
         {status === AnalysisStatus.PROCESSING && (
-          <div className="flex flex-col items-center justify-center py-32 space-y-8 animate-pulse">
-            <div className="relative">
-              <div className="w-24 h-24 border-8 border-navy/20 border-t-navy rounded-full animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center font-black text-navy text-xs">IA</div>
+          <div className="flex flex-col items-center justify-center py-32 space-y-10">
+            <div className="w-full max-w-2xl bg-gray-100 h-3 rounded-full overflow-hidden shadow-inner ring-1 ring-black/5">
+              <div className="bg-navy h-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
             </div>
-            <div className="text-center space-y-2">
-              <h3 className="text-2xl font-black text-navy uppercase tracking-widest">Calculando Vectores Semánticos</h3>
-              <p className="text-gray-400 text-sm italic">Identificando principios de Goebbels y Domenach...</p>
+            <div className="text-center space-y-4">
+              <h3 className="text-2xl font-medium text-navy uppercase tracking-tight">{progressLabel}</h3>
+              <p className="text-navy/20 font-medium text-4xl">{Math.floor(progress)}%</p>
             </div>
           </div>
         )}
-
-        {status === AnalysisStatus.COMPLETED && result && (
-          <div className="space-y-6">
-            <div className="flex justify-start">
-              <button 
-                onClick={reset}
-                className="bg-white border-2 border-navy text-navy px-8 py-2 rounded-xl font-bold uppercase text-xs hover:bg-navy hover:text-white transition-all shadow-xl shadow-navy/10"
-              >
-                ← Reiniciar Protocolo
-              </button>
-            </div>
-            <AnalysisDisplay result={result} />
+        {status === AnalysisStatus.COMPLETED && result && sourceMedia && (
+          <div className="space-y-8">
+            <button onClick={reset} className="bg-navy/5 text-navy px-8 py-3 rounded-xl font-medium uppercase text-xs tracking-widest border border-navy/10">← Nueva Consulta</button>
+            <AnalysisDisplay result={result} targetLanguage={selectedLanguage} sourceMedia={sourceMedia} />
           </div>
         )}
-
         {status === AnalysisStatus.ERROR && (
-          <div className="bg-red-50 border-2 border-red-200 p-12 rounded-3xl text-center shadow-2xl">
-            <div className="text-5xl mb-4">⚠️</div>
-            <h3 className="text-red-900 font-black text-2xl uppercase mb-2">Error Crítico de Análisis</h3>
-            <p className="text-red-600/70 mb-8 max-w-md mx-auto">{error}</p>
-            <button 
-              onClick={reset}
-              className="bg-red-900 text-white px-12 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-red-800 transition-all"
-            >
-              Reestablecer Conexión
-            </button>
+          <div className="bg-white border border-red-100 p-16 rounded-[2rem] text-center shadow-xl max-w-2xl mx-auto">
+            <h3 className="text-red-900 font-medium text-2xl uppercase mb-4">Error de Protocolo</h3>
+            <p className="text-red-600/70 mb-10">{error}</p>
+            <button onClick={reset} className="bg-navy text-white px-12 py-5 rounded-xl font-medium uppercase text-sm">Reiniciar Protocolo</button>
           </div>
         )}
       </div>

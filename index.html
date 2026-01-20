@@ -1,20 +1,48 @@
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Consultoría de Propaganda | Ricardo Rodríguez Inda</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navy: #001f3f;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+            background-color: #fcfdfe;
+            color: var(--navy);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
+            /* Forzar no bold */
+            font-weight: 400 !important;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
-        .bg-navy { background-color: #001f3f; }
-        .text-navy { color: #001f3f; }
-        .border-navy { border-color: #001f3f; }
+        .bg-navy { background-color: var(--navy); }
+        .text-navy { color: var(--navy); }
+        .border-navy { border-color: var(--navy); }
+        
+        /* Forzar normal en todos los elementos que heredan bold por defecto */
+        h1, h2, h3, h4, h5, h6, strong, b, button {
+            font-weight: 500 !important;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--navy); border-radius: 10px; }
+        
+        * { box-sizing: border-box; }
+        img, video, canvas { max-width: 100%; height: auto; display: block; }
+        
+        /* Estabilización de reportes */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; font-size: 10pt; }
+        }
     </style>
 <script type="importmap">
 {
@@ -22,12 +50,14 @@
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0"
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1",
+    "pptxgenjs": "https://esm.sh/pptxgenjs@3.12.0"
   }
 }
 </script>
 </head>
-<body>
+<body class="selection:bg-navy selection:text-white">
     <div id="root"></div>
 </body>
 </html>

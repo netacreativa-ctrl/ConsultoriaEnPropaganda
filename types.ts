@@ -7,24 +7,48 @@ export enum AnalysisStatus {
   ERROR = 'ERROR'
 }
 
-export type InputType = 'text' | 'image' | 'video' | 'audio' | 'url';
+export type InputType = 'text' | 'image' | 'video' | 'audio' | 'url' | 'hashtag';
+
+export type OutputLanguage = string;
+
+export interface AnalysisElement {
+  content: string;
+  sign: '+' | '-';
+}
+
+export interface SentimentStats {
+  positivo: number;
+  neutro: number;
+  negativo: number;
+}
+
+export interface TheoryElement {
+  name: string;
+  explanation: string;
+}
+
+export interface GroundingSource {
+  title?: string;
+  uri?: string;
+}
 
 export interface AnalysisResult {
-  messageType: string;
-  propagated: string;
-  propagandema: string;
-  polarity: 'Positivo' | 'Negativo' | 'Neutro';
-  intent: 'Afirmación' | 'Negación' | 'Reacción';
-  receptionConditions: {
-    universal: string;
-    cultural: string;
+  messageDescription: string;
+  summary: string;
+  sentimentStats: SentimentStats;
+  messageType: 'Afirmación' | 'Reacción' | 'Negación';
+  matrix: {
+    propagado: AnalysisElement;
+    propagandema: AnalysisElement;
+    recepcionUniversal: AnalysisElement;
+    recepcionCultural: AnalysisElement;
   };
-  mediaUsed: string;
-  audienceImpact: string;
-  propagandaPrinciple: string;
-  justification: string;
-  arguments: string[];
-  languageDetected: string;
+  persuasionPrinciples: TheoryElement[];
+  manipulationTechniques: TheoryElement[];
+  desiredImpact: string;
+  counterPropagandaStrategy: string;
+  strategicAnalysis: string;
+  sources?: GroundingSource[];
 }
 
 export interface MediaData {
@@ -32,4 +56,6 @@ export interface MediaData {
   content?: string; 
   base64?: string; 
   mimeType?: string;
+  targetLanguage: OutputLanguage;
+  fileName?: string;
 }
